@@ -1,5 +1,5 @@
 #
-# system.prop for Micromax A102
+# system.prop for TCT Yaris_M_GSM
 #
 
 rild.libpath=/system/lib/mtk-ril.so
@@ -58,6 +58,6 @@ ro.zygote.preload.enable=0
 # Disable dirty region for Mali
 debug.hwui.render_dirty_regions=false
 
-persist.sys.timezone=Asia/Kolkata
+persist.sys.timezone=	America/La_Paz
 persist.sys.strictmode.visual=0
 persist.sys.strictmode.disable=1

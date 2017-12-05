@@ -1,7 +1,7 @@
 # inherit from the proprietary version
--include vendor/Micromax/A102/BoardConfigVendor.mk
+-include vendor/TCT/Yaris_M_GSM/BoardConfigVendor.mk
 
-LOCAL_PATH := device/Micromax/A102
+LOCAL_PATH := device/TCT/Yaris_M_GSM
 
 # Off NINJA
 #USE_NINJA := false
@@ -35,7 +35,7 @@ TARGET_USERIMAGES_USE_EXT4:=true
 TARGET_USERIMAGES_SPARSE_EXT_DISABLED := false
 
 # Assert
-TARGET_OTA_ASSERT_DEVICE := A102
+TARGET_OTA_ASSERT_DEVICE := Yaris_M_GSM,yaris_m_gsm,Yaris_M,4032,4032A,4033
 
 # MTK HARDWARE
 OLD_KERNEL := true
@@ -98,7 +98,7 @@ TW_MAX_BRIGHTNESS := 255
 RECOVERY_SDCARD_ON_DATA := true
 TW_DEFAULT_EXTERNAL_STORAGE := true
 TW_CRYPTO_FS_TYPE := "ext4"
-TW_CRYPTO_REAL_BLKDEV := "/dev/block/mmcblk0p6"
+TW_CRYPTO_REAL_BLKDEV := "/dev/block/mmcblk0p9"
 TW_CRYPTO_MNT_POINT := "/data"
 TW_CRYPTO_FS_OPTIONS := "nosuid,nodev,noatime,discard,noauto_da_alloc,data=ordered"
 TW_NO_USB_STORAGE := true

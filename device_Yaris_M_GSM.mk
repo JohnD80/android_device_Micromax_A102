@@ -3,9 +3,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 # The gps config appropriate for this device
 $(call inherit-product, device/common/gps/gps_us_supl.mk)
 
-$(call inherit-product-if-exists, vendor/Micromax/A102/A102-vendor.mk)
+$(call inherit-product-if-exists, vendor/TCT/Yaris_M_GSM/Yaris_M_GSM-vendor.mk)
 
-LOCAL_PATH := device/Micromax/A102
+LOCAL_PATH := device/TCT/Yaris_M_GSM
 
 PRODUCT_CHARACTERISTICS := default
 
@@ -162,8 +162,8 @@ PRODUCT_PROPERTY_OVERRIDES := \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.media.use-awesome=true
 
-PRODUCT_NAME := full_A102
-PRODUCT_DEVICE := A102
+PRODUCT_NAME := full_Yaris_M_GSM
+PRODUCT_DEVICE := Yaris_M_GSM
 
 # Boot animation
 TARGET_SCREEN_HEIGHT := 854
