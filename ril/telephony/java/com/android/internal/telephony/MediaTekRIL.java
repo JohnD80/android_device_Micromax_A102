@@ -193,6 +193,8 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
     static final int RIL_UNSOL_CNAP = (RIL_UNSOL_MTK_BASE + 30);
     static final int RIL_UNSOL_STK_EVDL_CALL = (RIL_UNSOL_MTK_BASE + 31);
 
+	private boolean setPreferredNetworkTypeSeen = false;
+
     // TODO: Support multiSIM
     // Sim IDs are 0 / 1
     int mSimId = 0;
@@ -362,7 +364,7 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
     // all that C&P just for responseOperator overriding?
     @Override
     protected RILRequest
-    processSolicited (Parcel p, int type) {
+    processSolicited (Parcel p) {
         int serial, error;
         boolean found = false;
 
@@ -409,7 +411,16 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
             case RIL_REQUEST_GET_IMSI: ret =  responseString(p); break;
             case RIL_REQUEST_HANGUP: ret =  responseVoid(p); break;
             case RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND: ret =  responseVoid(p); break;
-            case RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND: ret =  responseVoid(p); break;
+            case RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND: {
+                if (mTestingEmergencyCall.getAndSet(false)) {
+                    if (mEmergencyCallbackModeRegistrant != null) {
+                        riljLog("testing emergency call, notify ECM Registrants");
+                        mEmergencyCallbackModeRegistrant.notifyRegistrant();
+                    }
+                }
+                ret =  responseVoid(p);
+                break;
+            }
             case RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE: ret =  responseVoid(p); break;
             case RIL_REQUEST_CONFERENCE: ret =  responseVoid(p); break;
             case RIL_REQUEST_UDUB: ret =  responseVoid(p); break;
@@ -542,7 +553,7 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
 
     @Override
     protected void
-    processUnsolicited (Parcel p, int type) {
+    processUnsolicited (Parcel p) {
         Object ret;
         int dataPosition = p.dataPosition(); // save off position within the Parcel
         int response = p.readInt();
@@ -585,7 +596,7 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
                 p.setDataPosition(dataPosition);
 
                 // Forward responses that we are not overriding to the super class
-                super.processUnsolicited(p, type);
+                super.processUnsolicited(p);
                 return;
         }
 
@@ -645,7 +656,7 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
             // And rewind again in front
             p.setDataPosition(dataPosition);
 
-            super.processUnsolicited(p, type);
+            super.processUnsolicited(p);
         }
     }
 	
@@ -664,7 +675,7 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
             case RIL_REQUEST_ENTER_SIM_PUK2: return "ENTER_SIM_PUK2";
             case RIL_REQUEST_CHANGE_SIM_PIN: return "CHANGE_SIM_PIN";
             case RIL_REQUEST_CHANGE_SIM_PIN2: return "CHANGE_SIM_PIN2";
-            case RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION: return "ENTER_DEPERSONALIZATION_CODE";
+            case RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION: return "ENTER_NETWORK_DEPERSONALIZATION";
             case RIL_REQUEST_GET_CURRENT_CALLS: return "GET_CURRENT_CALLS";
             case RIL_REQUEST_DIAL: return "DIAL";
             case RIL_REQUEST_GET_IMSI: return "GET_IMSI";
@@ -853,20 +864,20 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
     // Override setupDataCall as the MTK RIL needs 8th param CID (hardwired to 1?)
     @Override
     public void
-    setupDataCall(int radioTechnology, int profile, String apn,
-            String user, String password, int authType, String protocol,
+    setupDataCall(String radioTechnology, String profile, String apn,
+            String user, String password, String authType, String protocol,
             Message result) {
-
-        RILRequest rr = RILRequest.obtain(RIL_REQUEST_SETUP_DATA_CALL, result);
+        RILRequest rr
+                = RILRequest.obtain(RIL_REQUEST_SETUP_DATA_CALL, result);
 
         rr.mParcel.writeInt(8);
 
-        rr.mParcel.writeString(Integer.toString(radioTechnology + 2));
-        rr.mParcel.writeString(Integer.toString(profile));
+        rr.mParcel.writeString(radioTechnology);
+        rr.mParcel.writeString(profile);
         rr.mParcel.writeString(apn);
         rr.mParcel.writeString(user);
         rr.mParcel.writeString(password);
-        rr.mParcel.writeString(Integer.toString(authType));
+        rr.mParcel.writeString(authType);
         rr.mParcel.writeString(protocol);
         rr.mParcel.writeString("1");
 
@@ -1198,6 +1209,24 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
 	}
     }
 
+    protected Object
+    responseFailCause(Parcel p) {
+        int numInts;
+        int response[];
+
+        numInts = p.readInt();
+        response = new int[numInts];
+        for (int i = 0 ; i < numInts ; i++) {
+            response[i] = p.readInt();
+        }
+        LastCallFailCause failCause = new LastCallFailCause();
+        failCause.causeCode = response[0];
+        if (p.dataAvail() > 0) {
+          failCause.vendorCause = p.readString();
+        }
+        return failCause;
+    }
+
     public void setDataAllowed(boolean allowed, Message result) {
         handle3GSwitch();
 
@@ -1209,4 +1238,18 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
         rr.mParcel.writeInt(allowed ? 1 : 0);
         send(rr);
     }
+
+    @Override
+    public void setPreferredNetworkType(int networkType , Message response) {
+        riljLog("setPreferredNetworkType: " + networkType);
+
+        if (!setPreferredNetworkTypeSeen) {
+            riljLog("Need to reboot modem!");
+            setRadioPower(false, null);
+            setPreferredNetworkTypeSeen = true;
+        }
+
+        super.setPreferredNetworkType(networkType, response);
+    }
+	
 }

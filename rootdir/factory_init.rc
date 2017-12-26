@@ -93,7 +93,7 @@ on late-init
 # mount different fs start
 on fs
     write /proc/bootprof "INIT:eMMC:Mount_All_START"
-    mount_all /fstab.mt6572
+    mount_all /fstab.sprout
     write /proc/bootprof "INIT:eMMC:Mount_All_END"
 
     #for SD card with partition(s), always mount the 1st
@@ -243,7 +243,6 @@ on post-fs-data
     chmod 0444 /dev/M4U_device
 
     # Sensor
-    insmod /system/lib/modules/bma2xx.ko
     chmod 0660 /dev/hwmsensor
     chmod 0660 /dev/gyroscope
     chmod 0660 /dev/msensor
