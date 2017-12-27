@@ -21,5 +21,5 @@
 # function: add_lunch_combo generic-eng
 
 for var in eng user userdebug; do
-  add_lunch_combo lineage_Yaris_M_GSM-$var
+  add_lunch_combo aicp_Yaris_M_GSM-$var
 done

@@ -1,8 +1,8 @@
 # Release name
 PRODUCT_RELEASE_NAME := Yaris_M_GSM
 
-# Inherit some common CM stuff.
-$(call inherit-product, vendor/cm/config/common_full_phone.mk)
+# Inherit some common aicp stuff.
+$(call inherit-product, vendor/aicp/config/common_full_phone.mk)
 
 # Inherit device configuration
 $(call inherit-product, device/TCT/Yaris_M_GSM/device_Yaris_M_GSM.mk)
