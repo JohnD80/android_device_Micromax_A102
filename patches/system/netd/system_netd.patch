@@ -1,13 +1,13 @@
 From ac5981faaa8d08fac855b4ce4bb37f9772db0054 Mon Sep 17 00:00:00 2001
 From: LineageOS-MTK <luzejij@binka.me>
 Date: Tue, 7 Feb 2017 13:33:03 +0300
-Subject: [PATCH] MediaTek: improve mtk wifi tethering and fix wifi data
- connection
+Subject: [PATCH] system_netd
 
 ---
  server/RouteController.cpp  |  4 ++-
  server/SoftapController.cpp | 60 +++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 63 insertions(+), 1 deletion(-)
+ server/SoftapController.cpp | 4 ++--
+ 3 file changed, 65 insertions(+), 3 deletions(-)
 
 diff --git a/server/RouteController.cpp b/server/RouteController.cpp
 index 889779d..71e78e2 100644
@@ -142,3 +142,26 @@ index b05118e..7363df1 100755
  
      std::string fbuf;
      if (argc > 7) {
+
+diff --git a/server/SoftapController.cpp b/server/SoftapController.cpp
+index 7363df1..a3df34f 100755
+--- a/server/SoftapController.cpp
++++ b/server/SoftapController.cpp
+@@ -55,7 +55,7 @@ using android::base::WriteStringToFile;
+ #endif
+ 
+ #ifdef LIBWPA_CLIENT_EXISTS
+-static const char HOSTAPD_UNIX_FILE[]    = "/data/misc/wifi/hostapd/wlan0";
++static const char HOSTAPD_UNIX_FILE[]    = "/data/misc/wifi/hostapd/ap0";
+ static const char HOSTAPD_SOCKETS_DIR[]    = "/data/misc/wifi/sockets";
+ static const char HOSTAPD_DHCP_DIR[]    = "/data/misc/dhcp";
+ #endif
+@@ -306,7 +306,7 @@ int SoftapController::setSoftap(int argc, char *argv[]) {
+             "hw_mode=%c\n"
+             "ignore_broadcast_ssid=%d\n"
+             "wowlan_triggers=any\n",
+-            argv[2], argv[3], channel, (channel <= 14) ? 'g' : 'a', hidden));
++            "ap0", argv[3], channel, (channel <= 14) ? 'g' : 'a', hidden));
+ #else
+ /*
+  * Arguments:

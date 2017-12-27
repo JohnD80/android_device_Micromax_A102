@@ -2,7 +2,6 @@ From 8ed85d53224ed5154a53d352e9bc9b2fee89d41d Mon Sep 17 00:00:00 2001
 From: LineageOS-MTK <luzejij@binka.me>
 Date: Thu, 1 Jun 2017 17:30:23 +0300
 Subject: [PATCH] Revert "Bluetooth: Read BLE vendor capability to proceed on
- Secure conn"
 
 This reverts commit fcbb22034e2b8fb499484c135845ea7072d06d50.
 ---

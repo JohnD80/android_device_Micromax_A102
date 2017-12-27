@@ -1,16 +1,439 @@
-From 1fa85616ac7e542944a51edc0cac4800212de117 Mon Sep 17 00:00:00 2001
+From 8a65c5e6b6cd7259367c8eca2b0aaf3ce4b8d757 Mon Sep 17 00:00:00 2001
 From: LineageOS-MTK <luzejij@binka.me>
-Date: Tue, 7 Feb 2017 15:12:48 +0300
-Subject: [PATCH] MediaTek: switch MtkCameraParameters from cm-11.0.
+Date: Tue, 7 Feb 2017 14:52:46 +0300
+Subject: [PATCH] frameworks_av
+
 
 ---
+ media/libmedia/Android.mk         |   8 ++
+ media/libmedia/mtkaudio_stubs.cpp | 220 ++++++++++++++++++++++++++++++++++++++
+ .../include/SoftVideoDecoderOMXComponent.h         |  3 ++
+ .../omx/SoftVideoDecoderOMXComponent.cpp           | 32 ++++++++++++++++++++--
+ media/libstagefright/include/OMXNodeInstance.h |  3 +++
+ media/libstagefright/omx/Android.mk            |  6 ++++++
+ media/libstagefright/omx/OMXNodeInstance.cpp   | 23 +++++++++++++++++++++++
  camera/Android.mk                                  |   5 +
  camera/MtkCameraParameters.cpp                     | 331 ++++++++++++++++++
  camera/MtkCameraParameters.h                       | 388 +++++++++++++++++++++
  .../camera/libcameraservice/api1/CameraClient.cpp  |  42 ++-
- 4 files changed, 765 insertions(+), 1 deletion(-)
+ media/libstagefright/omx/OMXNodeInstance.cpp | 8 ++++----
+ include/media/MediaPlayerInterface.h               |   3 +
+ media/libmediaplayerservice/Android.mk             |   5 +
+ media/libmediaplayerservice/FMAudioPlayer.h        | 145 +++++++++++++++++++++
+ media/libmediaplayerservice/MediaPlayerFactory.cpp |  25 ++++
+ services/audioflinger/AudioFlinger.cpp             |  12 ++
+ {camera => include/camera}/MtkCameraParameters.h | 0
+ rename {camera => include/camera}/MtkCameraParameters.h (100%)
+ media/libmediaplayerservice/StagefrightRecorder.cpp |  8 ++++++++
+ media/libstagefright/MediaCodecSource.cpp           |  6 ++++++
+ media/libstagefright/OMXCodec.cpp                   | 11 +++++++++++
+ 21 files changed, 1277 insertions(+), 7 deletions(-)
+ create mode 100644 media/libmedia/mtkaudio_stubs.cpp
  create mode 100644 camera/MtkCameraParameters.cpp
- create mode 100644 camera/MtkCameraParameters.h
+ create mode 100644 camera/MtkCameraParameters.h 
+ create mode 100644 media/libmediaplayerservice/FMAudioPlayer.h
+ 
+ 
+diff --git a/media/libmedia/Android.mk b/media/libmedia/Android.mk
+index efcd54177..dae8f173b 100644
+--- a/media/libmedia/Android.mk
++++ b/media/libmedia/Android.mk
+@@ -101,5 +101,13 @@ LOCAL_C_INCLUDES := \
+ LOCAL_CFLAGS += -Werror -Wno-error=deprecated-declarations -Wall
+ LOCAL_CLANG := true
+ 
++ifeq ($(MTK_HARDWARE),true)
++LOCAL_SRC_FILES += \
++    mtkaudio_stubs.cpp
++
++# StrongPointer.h
++LOCAL_C_INCLUDES += $(TOP)/frameworks/rs/server
++endif
++ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+diff --git a/media/libmedia/mtkaudio_stubs.cpp b/media/libmedia/mtkaudio_stubs.cpp
+new file mode 100644
+index 000000000..84616f7cb
+--- /dev/null
++++ b/media/libmedia/mtkaudio_stubs.cpp
+@@ -0,0 +1,220 @@
++// #include <MtpTypes.h>
++#include <system/audio.h>
++#include <StrongPointer.h>
++#include <media/IAudioFlinger.h>
++#include <hardware/audio.h>
++#include <stdlib.h>
++#include <dlfcn.h>
++
++namespace android {
++
++typedef void (*audio_error_callback)(status_t err);
++
++class AudioSystem
++{
++public:
++    static bool getVoiceUnlockDLInstance();
++    static int GetVoiceUnlockDLLatency();
++    static int SetVoiceUnlockSRC(uint outSR, uint outChannel);
++    static bool stopVoiceUnlockDL();
++    static bool startVoiceUnlockDL();
++    static int ReadRefFromRing(void*buf, uint32_t datasz,void* DLtime);
++    static int GetVoiceUnlockULTime(void* DLtime);
++    static void freeVoiceUnlockDLInstance();
++
++}; // class
++
++bool AudioSystem::getVoiceUnlockDLInstance()
++{
++  return 0;
++}
++
++int AudioSystem::GetVoiceUnlockDLLatency()
++{
++  return 0;
++}
++
++int AudioSystem::SetVoiceUnlockSRC(uint outSR __unused, uint outChannel __unused)
++{
++  return 0;
++}
++
++bool AudioSystem::stopVoiceUnlockDL()
++{
++  return 0;
++}
++
++bool AudioSystem::startVoiceUnlockDL()
++{
++  return 0;
++}
++
++int AudioSystem::ReadRefFromRing(
++        void *buf __unused,
++        uint32_t datasz __unused,
++        void* DLtime __unused
++        )
++{
++  return 0;
++}
++
++int AudioSystem::GetVoiceUnlockULTime(void* DLtime __unused)
++{
++  return 0;
++}
++
++void AudioSystem::freeVoiceUnlockDLInstance()
++{
++  return;
++}
++
++class IATVCtrlClient
++{
++};
++
++class IATVCtrlService: public IInterface
++{
++public:
++  DECLARE_META_INTERFACE(ATVCtrlService);
++};
++
++class BpATVCtrlService : public BpInterface<IATVCtrlService>
++{
++public:
++    BpATVCtrlService(const sp<IBinder>& impl)
++        : BpInterface<IATVCtrlService>(impl)
++    {
++    }
++    virtual ~BpATVCtrlService()
++    {
++    }
++    virtual int ATVCS_matv_init()
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_ps_init(int on __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_set_parameterb(int in __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_suspend(int on __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_shutdown()
++    {
++        return 0;
++    }
++    virtual void ATVCS_matv_chscan(int mode __unused)
++    {
++    }
++    virtual void ATVCS_matv_chscan_stop()
++    {
++    }
++    virtual int ATVCS_matv_get_chtable(int ch __unused, void *entry __unused, int len __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_set_chtable(int ch __unused, void *entry __unused, int len __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_clear_chtable()
++    {
++        return 0;
++    }
++    virtual void ATVCS_matv_change_channel(int ch __unused)
++    {
++    }
++    virtual void ATVCS_matv_set_country(int country __unused)
++    {
++    }
++    virtual void ATVCS_matv_set_tparam(int mode __unused)
++    {
++    }
++    virtual void ATVCS_matv_audio_play()
++    {
++    }
++    virtual void ATVCS_matv_audio_stop()
++    {
++    }
++    virtual int ATVCS_matv_audio_get_format()
++    {
++        return 0;
++    }
++    virtual void ATVCS_matv_audio_set_format(int val __unused)
++    {
++    }
++    virtual int ATVCS_matv_audio_get_sound_system()
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_adjust(int item __unused, int val __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_get_chipdep(int item __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_matv_set_chipdep(int item __unused, int val __unused)
++    {
++        return 0;
++    }
++    virtual void ATVCS_matv_register_callback()
++    {
++    }
++    virtual void registerClient(const sp<IATVCtrlClient>& client __unused)
++    {
++    }
++    virtual void registerClient_FM(const sp<IATVCtrlClient>& client __unused)
++    {
++    }
++    virtual void CLI(char input __unused)
++    {
++    }
++    virtual int ATVCS_fm_powerup(void *parm __unused, int len __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_powerdown()
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_getrssi()
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_tune(void *parm __unused, int len __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_seek(void *parm __unused, int len __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_scan(void *parm __unused, int len __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_mute(int val __unused)
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_getchipid()
++    {
++        return 0;
++    }
++    virtual int ATVCS_fm_isFMPowerUp()
++    {
++        return 0;
++    }
++};
++
++IMPLEMENT_META_INTERFACE(ATVCtrlService, "android.media.IATVCtrlService");
++
++} // namespace
++
+
+diff --git a/media/libstagefright/include/SoftVideoDecoderOMXComponent.h b/media/libstagefright/include/SoftVideoDecoderOMXComponent.h
+index 45290073d..6ea839e7e 100644
+--- a/media/libstagefright/include/SoftVideoDecoderOMXComponent.h
++++ b/media/libstagefright/include/SoftVideoDecoderOMXComponent.h
+@@ -64,6 +64,9 @@ struct SoftVideoDecoderOMXComponent : public SimpleSoftOMXComponent {
+             const char *mimeType,
+             OMX_U32 minCompressionRatio = 1u);
+ 
++    // For MTK blob compatibility
++    virtual void updatePortDefinitions(bool updateCrop = true);
++	
+     virtual void updatePortDefinitions(bool updateCrop = true, bool updateInputSize = false);
+ 
+     uint32_t outputBufferWidth();
+diff --git a/media/libstagefright/omx/SoftVideoDecoderOMXComponent.cpp b/media/libstagefright/omx/SoftVideoDecoderOMXComponent.cpp
+index 19dde8328..61a4fdccd 100644
+--- a/media/libstagefright/omx/SoftVideoDecoderOMXComponent.cpp
++++ b/media/libstagefright/omx/SoftVideoDecoderOMXComponent.cpp
+@@ -130,6 +130,34 @@ void SoftVideoDecoderOMXComponent::initPorts(
+     updatePortDefinitions(true /* updateCrop */, true /* updateInputSize */);
+ }
+ 
++// For MTK blob compatibility
++void SoftVideoDecoderOMXComponent::updatePortDefinitions(bool updateCrop) {
++    OMX_PARAM_PORTDEFINITIONTYPE *def = &editPortInfo(kInputPortIndex)->mDef;
++    def->format.video.nFrameWidth = mWidth;
++    def->format.video.nFrameHeight = mHeight;
++    def->format.video.nStride = def->format.video.nFrameWidth;
++    def->format.video.nSliceHeight = def->format.video.nFrameHeight;
++
++    def->nBufferSize = def->format.video.nFrameWidth * def->format.video.nFrameHeight * 3 / 2;
++
++    def = &editPortInfo(kOutputPortIndex)->mDef;
++    def->format.video.nFrameWidth = outputBufferWidth();
++    def->format.video.nFrameHeight = outputBufferHeight();
++    def->format.video.nStride = def->format.video.nFrameWidth;
++    def->format.video.nSliceHeight = def->format.video.nFrameHeight;
++
++    def->nBufferSize =
++            (def->format.video.nFrameWidth *
++             def->format.video.nFrameHeight * 3) / 2;
++
++    if (updateCrop) {
++        mCropLeft = 0;
++        mCropTop = 0;
++        mCropWidth = mWidth;
++        mCropHeight = mHeight;
++    }
++}
++
+ void SoftVideoDecoderOMXComponent::updatePortDefinitions(bool updateCrop, bool updateInputSize) {
+     OMX_PARAM_PORTDEFINITIONTYPE *outDef = &editPortInfo(kOutputPortIndex)->mDef;
+     outDef->format.video.nFrameWidth = outputBufferWidth();
+@@ -202,12 +230,12 @@ void SoftVideoDecoderOMXComponent::handlePortSettingsChange(
+                     mAdaptiveMaxHeight = height;
+                 }
+             }
+-            updatePortDefinitions(updateCrop);
++            updatePortDefinitions(updateCrop, false);
+             notify(OMX_EventPortSettingsChanged, kOutputPortIndex, 0, NULL);
+             mOutputPortSettingsChange = AWAITING_DISABLED;
+             *portWillReset = true;
+         } else {
+-            updatePortDefinitions(updateCrop);
++            updatePortDefinitions(updateCrop, false);
+ 
+             if (fakeStride) {
+                 // MAJOR HACK that is not pretty, it's just to fool the renderer to read the correct
+
+diff --git a/media/libstagefright/include/OMXNodeInstance.h b/media/libstagefright/include/OMXNodeInstance.h
+index 5ba0e8f86..baf9cb54c 100644
+--- a/media/libstagefright/include/OMXNodeInstance.h
++++ b/media/libstagefright/include/OMXNodeInstance.h
+@@ -165,10 +165,13 @@ struct OMXNodeInstance {
+     };
+     Vector<ActiveBuffer> mActiveBuffers;
+     // for buffer ptr to buffer id translation
++	// but don't enable for use with MTK Lollipop- blob
++#ifndef USE_LEGACY_MTK_AV_BLOB
+     Mutex mBufferIDLock;
+     uint32_t mBufferIDCount;
+     KeyedVector<OMX::buffer_id, OMX_BUFFERHEADERTYPE *> mBufferIDToBufferHeader;
+     KeyedVector<OMX_BUFFERHEADERTYPE *, OMX::buffer_id> mBufferHeaderToBufferID;
++#endif
+     MetadataBufferType mMetadataType[2];
+ 
+     // For debug support
+diff --git a/media/libstagefright/omx/Android.mk b/media/libstagefright/omx/Android.mk
+index d16d5df12..31a0c4f1e 100644
+--- a/media/libstagefright/omx/Android.mk
++++ b/media/libstagefright/omx/Android.mk
+@@ -36,6 +36,12 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXTN_FLAC_DECODER)),true)
+ endif
+ endif
+ 
++ifeq ($(BOARD_HAS_MTK_HARDWARE),true)
++ifeq ($(BOARD_USES_LEGACY_MTK_AV_BLOB),true)
++LOCAL_CFLAGS += -DUSE_LEGACY_MTK_AV_BLOB
++endif
++endif
++
+ LOCAL_MODULE:= libstagefright_omx
+ LOCAL_CFLAGS += -Werror -Wall
+ LOCAL_CLANG := true
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 0c30e448d..6c0ac52b5 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -220,10 +220,14 @@ OMXNodeInstance::OMXNodeInstance(
+     : mOwner(owner),
+       mNodeID(0),
+       mHandle(NULL),
++#ifndef USE_LEGACY_MTK_AV_BLOB
+       mObserver(observer),
+       mSailed(false),
+       mQueriedProhibitedExtensions(false),
+       mBufferIDCount(0)
++#else
++      mObserver(observer)
++#endif
+ {
+     mName = ADebug::GetDebugName(name);
+     DEBUG = ADebug::GetDebugLevelFromProperty(name, "debug.stagefright.omx-debug");
+@@ -1779,6 +1783,7 @@ void OMXNodeInstance::freeActiveBuffers() {
+     }
+ }
+ 
++#ifndef USE_LEGACY_MTK_AV_BLOB
+ OMX::buffer_id OMXNodeInstance::makeBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
+     if (bufferHeader == NULL) {
+         return 0;
+@@ -1844,5 +1849,23 @@ void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer) {
+     mBufferHeaderToBufferID.removeItem(mBufferIDToBufferHeader.valueAt(index));
+     mBufferIDToBufferHeader.removeItemsAt(index);
+ }
++#else
+ 
++OMX::buffer_id OMXNodeInstance::makeBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
++    return (OMX::buffer_id)bufferHeader;
++}
++
++OMX_BUFFERHEADERTYPE *OMXNodeInstance::findBufferHeader(OMX::buffer_id buffer) {
++    return (OMX_BUFFERHEADERTYPE *)buffer;
++}
++
++OMX::buffer_id OMXNodeInstance::findBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
++    return (OMX::buffer_id)bufferHeader;
++}
++
++void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer __unused) {
++}
++
++#endif
++ 
+ }  // namespace android
 
 diff --git a/camera/Android.mk b/camera/Android.mk
 index 36f6da107..575280b65 100644
@@ -826,3 +1249,346 @@ index af46d6355..efed5a22c 100644
      switch (msgType & ~CAMERA_MSG_PREVIEW_METADATA) {
          case CAMERA_MSG_PREVIEW_FRAME:
              client->handlePreviewData(msgType, dataPtr, metadata);
+
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 6c0ac52b5..424a5dac9 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -1852,15 +1852,15 @@ void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer) {
+ #else
+ 
+ OMX::buffer_id OMXNodeInstance::makeBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
+-    return (OMX::buffer_id)bufferHeader;
++    return (OMX::buffer_id)(size_t)bufferHeader;
+ }
+ 
+-OMX_BUFFERHEADERTYPE *OMXNodeInstance::findBufferHeader(OMX::buffer_id buffer) {
+-    return (OMX_BUFFERHEADERTYPE *)buffer;
++OMX_BUFFERHEADERTYPE *OMXNodeInstance::findBufferHeader(OMX::buffer_id buffer, OMX_U32 portIndex __unused) {
++    return (OMX_BUFFERHEADERTYPE *)(size_t)buffer;
+ }
+ 
+ OMX::buffer_id OMXNodeInstance::findBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
+-    return (OMX::buffer_id)bufferHeader;
++    return (OMX::buffer_id)(size_t)bufferHeader;
+ }
+ 
+ void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer __unused) {
+
+diff --git a/include/media/MediaPlayerInterface.h b/include/media/MediaPlayerInterface.h
+index 4810b7eef..e2fb54d1a 100644
+--- a/include/media/MediaPlayerInterface.h
++++ b/include/media/MediaPlayerInterface.h
+@@ -52,6 +52,9 @@ enum player_type {
+     // argument to the 'test:' url in the setDataSource call.
+     TEST_PLAYER = 5,
+     DASH_PLAYER = 6,
++#ifdef MTK_HARDWARE
++    FM_AUDIO_PLAYER = 7,
++#endif
+ };
+ 
+ 
+diff --git a/media/libmediaplayerservice/Android.mk b/media/libmediaplayerservice/Android.mk
+index 6575625e9..08d53260b 100644
+--- a/media/libmediaplayerservice/Android.mk
++++ b/media/libmediaplayerservice/Android.mk
+@@ -58,6 +58,11 @@ LOCAL_C_INCLUDES :=                                                 \
+     $(TOP)/external/tremolo/Tremolo                                 \
+     $(TOP)/frameworks/av/media/libavextensions                      \
+ 
++# Mediatek
++ifeq ($(strip $(BOARD_HAS_MTK_HARDWARE)),true)
++LOCAL_SHARED_LIBRARIES += libmtkplayer
++endif
++
+ LOCAL_CFLAGS += -Werror -Wno-error=deprecated-declarations -Wall #-DLOG_NDEBUG=0
+ LOCAL_CLANG := true
+ 
+diff --git a/media/libmediaplayerservice/FMAudioPlayer.h b/media/libmediaplayerservice/FMAudioPlayer.h
+new file mode 100644
+index 000000000..dcefbc9fb
+--- /dev/null
++++ b/media/libmediaplayerservice/FMAudioPlayer.h
+@@ -0,0 +1,145 @@
++/* Copyright Statement:
++ *
++ * This software/firmware and related documentation ("MediaTek Software") are
++ * protected under relevant copyright laws. The information contained herein
++ * is confidential and proprietary to MediaTek Inc. and/or its licensors.
++ * Without the prior written permission of MediaTek inc. and/or its licensors,
++ * any reproduction, modification, use or disclosure of MediaTek Software,
++ * and information contained herein, in whole or in part, shall be strictly prohibited.
++ */
++/* MediaTek Inc. (C) 2010. All rights reserved.
++ *
++ * BY OPENING THIS FILE, RECEIVER HEREBY UNEQUIVOCALLY ACKNOWLEDGES AND AGREES
++ * THAT THE SOFTWARE/FIRMWARE AND ITS DOCUMENTATIONS ("MEDIATEK SOFTWARE")
++ * RECEIVED FROM MEDIATEK AND/OR ITS REPRESENTATIVES ARE PROVIDED TO RECEIVER ON
++ * AN "AS-IS" BASIS ONLY. MEDIATEK EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES,
++ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT.
++ * NEITHER DOES MEDIATEK PROVIDE ANY WARRANTY WHATSOEVER WITH RESPECT TO THE
++ * SOFTWARE OF ANY THIRD PARTY WHICH MAY BE USED BY, INCORPORATED IN, OR
++ * SUPPLIED WITH THE MEDIATEK SOFTWARE, AND RECEIVER AGREES TO LOOK ONLY TO SUCH
++ * THIRD PARTY FOR ANY WARRANTY CLAIM RELATING THERETO. RECEIVER EXPRESSLY ACKNOWLEDGES
++ * THAT IT IS RECEIVER'S SOLE RESPONSIBILITY TO OBTAIN FROM ANY THIRD PARTY ALL PROPER LICENSES
++ * CONTAINED IN MEDIATEK SOFTWARE. MEDIATEK SHALL ALSO NOT BE RESPONSIBLE FOR ANY MEDIATEK
++ * SOFTWARE RELEASES MADE TO RECEIVER'S SPECIFICATION OR TO CONFORM TO A PARTICULAR
++ * STANDARD OR OPEN FORUM. RECEIVER'S SOLE AND EXCLUSIVE REMEDY AND MEDIATEK'S ENTIRE AND
++ * CUMULATIVE LIABILITY WITH RESPECT TO THE MEDIATEK SOFTWARE RELEASED HEREUNDER WILL BE,
++ * AT MEDIATEK'S OPTION, TO REVISE OR REPLACE THE MEDIATEK SOFTWARE AT ISSUE,
++ * OR REFUND ANY SOFTWARE LICENSE FEES OR SERVICE CHARGE PAID BY RECEIVER TO
++ * MEDIATEK FOR SUCH MEDIATEK SOFTWARE AT ISSUE.
++ *
++ * The following software/firmware and/or related documentation ("MediaTek Software")
++ * have been modified by MediaTek Inc. All revisions are subject to any receiver's
++ * applicable license agreements with MediaTek Inc.
++ */
++
++#ifndef ANDROID_FM_AUDIOPLAYER_H
++#define ANDROID_FM_AUDIOPLAYER_H
++
++
++#include <utils/threads.h>
++
++#include <media/MediaPlayerInterface.h>
++#include <media/AudioTrack.h>
++#include <media/AudioRecord.h>
++
++namespace android
++{
++
++class FMAudioPlayer : public MediaPlayerInterface
++{
++public:
++    FMAudioPlayer();
++    ~FMAudioPlayer();
++
++    virtual void        onFirstRef();
++    virtual status_t    initCheck();
++    //virtual status_t    setDataSource(const char *path, const KeyedVector<String8, String8> *headers);
++    virtual status_t    setDataSource(const sp<IMediaHTTPService> &httpService, const char *url, const KeyedVector<String8, String8> *headers);
++    virtual status_t    setDataSource(int fd, int64_t offset, int64_t length);
++    virtual status_t    setVideoSurface(const sp<Surface>& /*surface*/)
++    {
++        return UNKNOWN_ERROR;
++    }
++    virtual status_t    setVideoSurfaceTexture(
++        const sp<IGraphicBufferProducer>& /*bufferProducer*/)
++    {
++        return UNKNOWN_ERROR;
++    }
++    virtual status_t    prepare();
++    virtual status_t    prepareAsync();
++    virtual status_t    start();
++    virtual status_t    stop();
++    virtual status_t    seekTo(int msec);
++    virtual status_t    pause();
++    virtual bool        isPlaying();
++    virtual status_t    getCurrentPosition(int *msec);
++    virtual status_t    getDuration(int *msec);
++    virtual status_t    release();
++    virtual status_t    reset();
++    virtual status_t    setLooping(int loop);
++#ifndef FAKE_FM
++    virtual status_t    setRender(bool enable);
++#endif
++    virtual player_type playerType()
++    {
++        return FM_AUDIO_PLAYER;
++    }
++    virtual status_t    invoke(const Parcel &/*request*/, Parcel */*reply*/)
++    {
++        return INVALID_OPERATION;
++    }
++    virtual status_t    setParameter(int /*key*/, const Parcel &/*request*/)
++    {
++        return INVALID_OPERATION;
++    }
++    virtual status_t    getParameter(int /*key*/, Parcel */*reply*/)
++    {
++        return INVALID_OPERATION;
++    }
++
++private:
++    status_t    setdatasource(const char *path, int fd, int64_t offset, int64_t length);
++    status_t    reset_nosync();
++    status_t    createOutputTrack();
++    static int  renderThread(void *);
++    int         render();
++    bool        createAudioRecord();
++    bool        deleteAudioRecord();
++
++#ifndef FAKE_FM
++    void        setHwCallback(bool enable);
++#endif
++
++    sp<AudioRecord>      mAudioRecord;
++    Mutex               mMutex;
++    Condition           mCondition;
++    FILE               *mFile;
++    int64_t             mOffset;
++    int64_t             mLength;
++    char               *mAudioBuffer;
++    char               *mDummyBuffer;
++    int                 mPlayTime;
++    int                 mDuration;
++    uint32_t            mFmAudioSamplingRate;
++
++    status_t            mState;
++    int                 mStreamType;
++    bool                mAndroidLoop;
++    volatile bool       mExit;
++    bool                mPaused;
++		
++    bool		mSetRender;
++    volatile bool       mRender;
++    pid_t               mRenderTid;
++    bool 		flagRecordError;
++
++    int mMutePause;
++};
++
++}; // namespace android
++
++#endif
++
++
++
+diff --git a/media/libmediaplayerservice/MediaPlayerFactory.cpp b/media/libmediaplayerservice/MediaPlayerFactory.cpp
+index f0afc5a0f..e378f3ca2 100644
+--- a/media/libmediaplayerservice/MediaPlayerFactory.cpp
++++ b/media/libmediaplayerservice/MediaPlayerFactory.cpp
+@@ -34,6 +34,10 @@
+ #include "nuplayer/NuPlayerDriver.h"
+ #include <mediaplayerservice/AVMediaServiceExtensions.h>
+ 
++#ifdef MTK_HARDWARE
++#include "FMAudioPlayer.h"
++#endif
++
+ namespace android {
+ 
+ Mutex MediaPlayerFactory::sLock;
+@@ -241,6 +245,24 @@ class TestPlayerFactory : public MediaPlayerFactory::IFactory {
+     }
+ };
+ 
++#ifdef MTK_HARDWARE
++class FMPlayerFactory : public MediaPlayerFactory::IFactory {
++  public:
++    virtual float scoreFactory(const sp<IMediaPlayer>& /*client*/,
++                               const char* url,
++                               float /*curScore*/) {
++        if(strncmp(url, "MEDIATEK://MEDIAPLAYER_PLAYERTYPE_FM", 36) == 0)
++           return 1.0;
++        return 0.0;
++    }
++
++    virtual sp<MediaPlayerBase> createPlayer(pid_t /* pid */) {
++        ALOGV("Create FM Player");
++        return new FMAudioPlayer();
++    }
++};
++#endif
++
+ void MediaPlayerFactory::registerBuiltinFactories() {
+ 
+     MediaPlayerFactory::IFactory* pCustomFactory = NULL;
+@@ -256,6 +278,9 @@ void MediaPlayerFactory::registerBuiltinFactories() {
+         ALOGV("Registering DASH_PLAYER");
+         registerFactory_l(pCustomFactory, DASH_PLAYER);
+     }
++#ifdef MTK_HARDWARE
++    registerFactory_l(new FMPlayerFactory(), FM_AUDIO_PLAYER);
++#endif
+ 
+     sInitComplete = true;
+ }
+diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
+index 9d435e96c..e63b81955 100644
+--- a/services/audioflinger/AudioFlinger.cpp
++++ b/services/audioflinger/AudioFlinger.cpp
+@@ -989,6 +989,18 @@ status_t AudioFlinger::setStreamVolume(audio_stream_type_t stream, float value,
+         thread->setStreamVolume(stream, value);
+     }
+ 
++#ifdef MTK_HARDWARE
++    // MTK FM Volume
++    if(stream == AUDIO_STREAM_MUSIC) {
++        sp<ThreadBase> thread;
++        thread = checkPlaybackThread_l(output);
++        if (thread == primaryPlaybackThread_l()) {
++            audio_hw_device_t *dev = mPrimaryHardwareDev->hwDevice();
++            dev->set_parameters (dev, String8::format("SetFmVolume=%f", value));
++        }
++    }
++#endif
++
+     return NO_ERROR;
+ }
+ 
+diff --git a/camera/MtkCameraParameters.h b/include/camera/MtkCameraParameters.h
+similarity index 100%
+rename from camera/MtkCameraParameters.h
+rename to include/camera/MtkCameraParameters.h
+
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.cpp b/media/libmediaplayerservice/StagefrightRecorder.cpp
+index 442dba1a9..d5b9576c1 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -1613,6 +1613,14 @@ status_t StagefrightRecorder::setupVideoEncoder(
+             break;
+     }
+ 
++	// force hw video encoder for camera
++    if (mVideoSource == VIDEO_SOURCE_CAMERA) {
++        AString mime;
++        CHECK(format->findString("mime", &mime));
++        mime.append("_cam");
++        format->setString("mime", mime);
++    }
++
+     if (cameraSource != NULL) {
+         sp<MetaData> meta = cameraSource->getFormat();
+ 
+diff --git a/media/libstagefright/MediaCodecSource.cpp b/media/libstagefright/MediaCodecSource.cpp
+index 14a3c0d74..60b02e320 100644
+--- a/media/libstagefright/MediaCodecSource.cpp
++++ b/media/libstagefright/MediaCodecSource.cpp
+@@ -411,6 +411,12 @@ status_t MediaCodecSource::initEncoder() {
+             mCodecLooper, outputMIME.c_str(), true /* encoder */);
+     }
+ 
++	// remove camera tag from mime
++    if (outputMIME.endsWith("_cam")) {
++        outputMIME.erase(outputMIME.size() - 4, 4);
++        mOutputFormat->setString("mime", outputMIME);
++    }
++
+     if (mEncoder == NULL) {
+         return NO_INIT;
+     }
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index de00ff282..43c60c636 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -214,6 +214,17 @@ void OMXCodec::findMatchingCodecs(
+         return;
+     }
+ 
++	AString *tempMime = new AString(mime);
++    if (tempMime->endsWith("_cam")) {
++        // remove camera tag from mime
++        tempMime->erase(tempMime->size() - 4, 4);
++        mime = tempMime->c_str();
++    }
++    else {
++        // no camera recording, prefer software codecs
++        flags |= kPreferSoftwareCodecs;
++    }
++
+     size_t index = 0;
+     for (;;) {
+         ssize_t matchIndex =

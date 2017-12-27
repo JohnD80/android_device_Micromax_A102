@@ -1,7 +1,7 @@
 From 65ac1472927b9c281f28362ed30819387724845c Mon Sep 17 00:00:00 2001
 From: LineageOS-MTK <luzejij@binka.me>
 Date: Tue, 7 Feb 2017 14:24:13 +0300
-Subject: [PATCH] MediaTek: add MTK gps header
+Subject: [PATCH] hardware_libhardware
 
 ---
  include/hardware/gps.h | 49 +++++++++++++++++++++++++++++++++++++++++++++++++
