@@ -1,0 +1,49 @@
+From da5a9a8db27b51e4a26e9f8cd3316640815344a9 Mon Sep 17 00:00:00 2001
+From: LineageOS-MTK <luzejij@binka.me>
+Date: Tue, 7 Feb 2017 16:52:40 +0300
+Subject: [PATCH] Mediatek:Add prepareWithoutScan for FMRadio
+
+---
+ api/current.txt                           | 1 +
+ api/system-current.txt                    | 1 +
+ media/java/android/media/MediaPlayer.java | 3 +++
+ 3 files changed, 5 insertions(+)
+
+diff --git a/api/current.txt b/api/current.txt
+index c45cc3dbbf4..419ade341b7 100644
+--- a/api/current.txt
++++ b/api/current.txt
+@@ -16106,6 +16106,7 @@ package android.media {
+     method public boolean isPlaying();
+     method public void pause() throws java.lang.IllegalStateException;
+     method public void prepare() throws java.io.IOException, java.lang.IllegalStateException;
++	method public void prepareWithoutScan() throws java.io.IOException, java.lang.IllegalStateException;
+     method public void prepareAsync() throws java.lang.IllegalStateException;
+     method public void release();
+     method public void reset();
+diff --git a/api/system-current.txt b/api/system-current.txt
+index 1e7b94e883e..7bfae8c2aa6 100644
+--- a/api/system-current.txt
++++ b/api/system-current.txt
+@@ -17373,6 +17373,7 @@ package android.media {
+     method public boolean isPlaying();
+     method public void pause() throws java.lang.IllegalStateException;
+     method public void prepare() throws java.io.IOException, java.lang.IllegalStateException;
++	method public void prepareWithoutScan() throws java.io.IOException, java.lang.IllegalStateException;
+     method public void prepareAsync() throws java.lang.IllegalStateException;
+     method public void release();
+     method public void reset();
+diff --git a/media/java/android/media/MediaPlayer.java b/media/java/android/media/MediaPlayer.java
+index b3f25eea565..54c6b4ff9b8 100644
+--- a/media/java/android/media/MediaPlayer.java
++++ b/media/java/android/media/MediaPlayer.java
+@@ -1158,6 +1158,9 @@ public void prepare() throws IOException, IllegalStateException {
+         _prepare();
+         scanInternalSubtitleTracks();
+     }
++	public void prepareWithoutScan() throws IOException, IllegalStateException {
++        _prepare();
++    }
+ 
+     private native void _prepare() throws IOException, IllegalStateException;
+ 

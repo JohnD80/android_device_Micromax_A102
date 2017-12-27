@@ -1,0 +1,21 @@
+From 8ac13766dff1464b4ba2e4d74190062a9b3e825f Mon Sep 17 00:00:00 2001
+From: Aditya Kumar <adityakumarteli7846@gmail.com>
+Date: Thu, 8 Jun 2017 15:16:23 +0530
+Subject: [PATCH] Add symbol required by libdpframework
+
+---
+ libutils/MediatekHacks.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libutils/MediatekHacks.cpp b/libutils/MediatekHacks.cpp
+index c0108319e..5b8397966 100644
+--- a/libutils/MediatekHacks.cpp
++++ b/libutils/MediatekHacks.cpp
+@@ -1,6 +1,7 @@
+ extern "C" {
+  void _ZN7android11IDumpTunnel11asInterfaceERKNS_2spINS_7IBinderEEE(){}
+  void _ZN7android11BufferQueueC1ERKNS_2spINS_19IGraphicBufferAllocEEE(){}
++ void pmen_alloc_sync(){}
+  void _ZN7android22IGraphicBufferConsumer10BufferItemC1Ev(){}
+  void _ZN7android9CallStackC1EPKci(char const*, int);
+  void _ZN7android9CallStack6updateEii(int, int);

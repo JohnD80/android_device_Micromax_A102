@@ -1,0 +1,40 @@
+From 179a374034c0eba6e5046cd73bc5f14ec07c5317 Mon Sep 17 00:00:00 2001
+From: LineageOS-MTK <luzejij@binka.me>
+Date: Tue, 30 May 2017 10:44:14 +0300
+Subject: [PATCH] Use display name instead of numeric carrier
+
+Thanks to @DerTeufel
+---
+ .../android/internal/telephony/SubscriptionController.java   | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/java/com/android/internal/telephony/SubscriptionController.java b/src/java/com/android/internal/telephony/SubscriptionController.java
+index 2979a760e..e74d0b01b 100644
+--- a/src/java/com/android/internal/telephony/SubscriptionController.java
++++ b/src/java/com/android/internal/telephony/SubscriptionController.java
+@@ -265,6 +265,13 @@ public void notifySubscriptionInfoChanged() {
+          broadcastSimInfoContentChanged();
+      }
+ 
++	 private boolean isNumeric(String str) {
++         for (char c : str.toCharArray()) {
++             if (!Character.isDigit(c)) return false;
++         }
++         return true;
++     }
++
+     /**
+      * New SubInfoRecord instance and fill in detail info
+      * @param cursor
+@@ -309,6 +316,11 @@ private SubscriptionInfo getSubInfoRecord(Cursor cursor) {
+                 + " mcc:" + mcc + " mnc:" + mnc + " countIso:" + countryIso + " userNwMode:" + userNwMode);
+         }
+ 
++		if (isNumeric(carrierName)) {
++            carrierName = displayName;
++            logd("[getSubInfoRecord] carrierName changed to: " + displayName);
++        }
++
+         // If line1number has been set to a different number, use it instead.
+         String line1Number = mTelephonyManager.getLine1NumberForSubscriber(id);
+         if (!TextUtils.isEmpty(line1Number) && !line1Number.equals(number)) {

@@ -1,0 +1,14 @@
+From 91936e0e04004fd7695266caedf05f222b69e351 Mon Sep 17 00:00:00 2001
+From: LineageOS-MTK <luzejij@binka.me>
+Date: Tue, 7 Feb 2017 23:36:03 +0400
+Subject: [PATCH] Change the location of the file
+
+---
+ {camera => include/camera}/MtkCameraParameters.h | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ rename {camera => include/camera}/MtkCameraParameters.h (100%)
+
+diff --git a/camera/MtkCameraParameters.h b/include/camera/MtkCameraParameters.h
+similarity index 100%
+rename from camera/MtkCameraParameters.h
+rename to include/camera/MtkCameraParameters.h

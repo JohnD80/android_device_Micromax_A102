@@ -1,0 +1,97 @@
+From 477064f9c33902b4096f580593e638b250504e1e Mon Sep 17 00:00:00 2001
+From: LineageOS-MTK <luzejij@binka.me>
+Date: Tue, 7 Feb 2017 15:05:42 +0300
+Subject: [PATCH] MediaTek: add USE_LEGACY_MTK_AV_BLOB.
+
+---
+ media/libstagefright/include/OMXNodeInstance.h |  3 +++
+ media/libstagefright/omx/Android.mk            |  6 ++++++
+ media/libstagefright/omx/OMXNodeInstance.cpp   | 23 +++++++++++++++++++++++
+ 3 files changed, 32 insertions(+)
+
+diff --git a/media/libstagefright/include/OMXNodeInstance.h b/media/libstagefright/include/OMXNodeInstance.h
+index 5ba0e8f86..baf9cb54c 100644
+--- a/media/libstagefright/include/OMXNodeInstance.h
++++ b/media/libstagefright/include/OMXNodeInstance.h
+@@ -165,10 +165,13 @@ struct OMXNodeInstance {
+     };
+     Vector<ActiveBuffer> mActiveBuffers;
+     // for buffer ptr to buffer id translation
++	// but don't enable for use with MTK Lollipop- blob
++#ifndef USE_LEGACY_MTK_AV_BLOB
+     Mutex mBufferIDLock;
+     uint32_t mBufferIDCount;
+     KeyedVector<OMX::buffer_id, OMX_BUFFERHEADERTYPE *> mBufferIDToBufferHeader;
+     KeyedVector<OMX_BUFFERHEADERTYPE *, OMX::buffer_id> mBufferHeaderToBufferID;
++#endif
+     MetadataBufferType mMetadataType[2];
+ 
+     // For debug support
+diff --git a/media/libstagefright/omx/Android.mk b/media/libstagefright/omx/Android.mk
+index d16d5df12..31a0c4f1e 100644
+--- a/media/libstagefright/omx/Android.mk
++++ b/media/libstagefright/omx/Android.mk
+@@ -36,6 +36,12 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXTN_FLAC_DECODER)),true)
+ endif
+ endif
+ 
++ifeq ($(BOARD_HAS_MTK_HARDWARE),true)
++ifeq ($(BOARD_USES_LEGACY_MTK_AV_BLOB),true)
++LOCAL_CFLAGS += -DUSE_LEGACY_MTK_AV_BLOB
++endif
++endif
++
+ LOCAL_MODULE:= libstagefright_omx
+ LOCAL_CFLAGS += -Werror -Wall
+ LOCAL_CLANG := true
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 0c30e448d..6c0ac52b5 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -220,10 +220,14 @@ OMXNodeInstance::OMXNodeInstance(
+     : mOwner(owner),
+       mNodeID(0),
+       mHandle(NULL),
++#ifndef USE_LEGACY_MTK_AV_BLOB
+       mObserver(observer),
+       mSailed(false),
+       mQueriedProhibitedExtensions(false),
+       mBufferIDCount(0)
++#else
++      mObserver(observer)
++#endif
+ {
+     mName = ADebug::GetDebugName(name);
+     DEBUG = ADebug::GetDebugLevelFromProperty(name, "debug.stagefright.omx-debug");
+@@ -1779,6 +1783,7 @@ void OMXNodeInstance::freeActiveBuffers() {
+     }
+ }
+ 
++#ifndef USE_LEGACY_MTK_AV_BLOB
+ OMX::buffer_id OMXNodeInstance::makeBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
+     if (bufferHeader == NULL) {
+         return 0;
+@@ -1844,5 +1849,23 @@ void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer) {
+     mBufferHeaderToBufferID.removeItem(mBufferIDToBufferHeader.valueAt(index));
+     mBufferIDToBufferHeader.removeItemsAt(index);
+ }
++#else
+ 
++OMX::buffer_id OMXNodeInstance::makeBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
++    return (OMX::buffer_id)bufferHeader;
++}
++
++OMX_BUFFERHEADERTYPE *OMXNodeInstance::findBufferHeader(OMX::buffer_id buffer) {
++    return (OMX_BUFFERHEADERTYPE *)buffer;
++}
++
++OMX::buffer_id OMXNodeInstance::findBufferID(OMX_BUFFERHEADERTYPE *bufferHeader) {
++    return (OMX::buffer_id)bufferHeader;
++}
++
++void OMXNodeInstance::invalidateBufferID(OMX::buffer_id buffer __unused) {
++}
++
++#endif
++ 
+ }  // namespace android
