@@ -1,7 +1,7 @@
 From a9e7f33f1c0b67e571cc39e9fb5dc76bc78978a0 Mon Sep 17 00:00:00 2001
 From: LineageOS-MTK <luzejij@binka.me>
 Date: Tue, 7 Feb 2017 14:07:39 +0300
-Subject: [PATCH] frameworks_telephony_otp
+Subject: [PATCH] frameworks_telephony_opt
 
 ---
  .../com/android/internal/telephony/SubscriptionInfoUpdater.java    | 2 +-
